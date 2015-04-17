@@ -1,3 +1,4 @@
+import time
 MAPPING_FILE_NAME = 'mappings'
 
 
@@ -23,6 +24,7 @@ def time_stamp_from_tag(tag):
 
         raise TagNotFound
 
+
 def record(tag, time_stamp):
     """
     append the (tag time_stamp) pair to the mapping file
@@ -33,3 +35,9 @@ def record(tag, time_stamp):
     with open(MAPPING_FILE_NAME, 'a') as mapping_file:
         s = '{} {}\n'.format(tag, time_stamp)
         mapping_file.writelines(s)
+
+
+def new_name():
+    t = time.localtime(time.time())
+    return '{}-{}-{}_{}:{}:{}'.format(t.tm_year, t.tm_mon, t.tm_mday,
+                                      t.tm_hour, t.tm_min, t.tm_sec)
