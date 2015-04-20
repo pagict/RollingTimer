@@ -25,19 +25,17 @@ def time_stamp_from_tag(tag):
         raise TagNotFound
 
 
-def record(tag, time_stamp):
+def record_line(tag, time_stamp):
     """
-    append the (tag time_stamp) pair to the mapping file
-    :param tag:
-    :param time_stamp:
-    :return:
+    Return the (tag time_stamp) pair, for appending the mapping file
+    @:type tag: str
+    @:type time_stamp: str
+    :rtype str: a formatted string like 'tag time_stamp'
     """
-    with open(MAPPING_FILE_NAME, 'a') as mapping_file:
-        s = '{} {}\n'.format(tag, time_stamp)
-        mapping_file.writelines(s)
+    return '{} {}\n'.format(tag, time_stamp)
 
 
 def new_name():
     t = time.localtime(time.time())
-    return '{}-{}-{}_{}:{}:{}'.format(t.tm_year, t.tm_mon, t.tm_mday,
+    return '{:04d}-{:02d}-{:02d}_{:02d}:{:02d}:{:02d}'.format(t.tm_year, t.tm_mon, t.tm_mday,
                                       t.tm_hour, t.tm_min, t.tm_sec)
