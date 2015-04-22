@@ -1,5 +1,6 @@
 import time
 import subprocess
+import os.path
 MAPPING_FILE_NAME = 'mappings'
 
 
@@ -10,30 +11,33 @@ class TagNotFound(Exception):
     pass
 
 
-def time_stamp_from_tag(tag):
+def time_stamp_destination_from_tag(mapping_file, tag):
     """
-    Read the (tag time_stamp) mapping file, find the time_stamp string
-    correspondent to the tag. If no this tag, raise a TagNotFound exception
+    Read the (tag time_stamp destination) mapping file, find the
+    (time_stamp string destination_path) tuple correspondent to
+     the tag. If no this tag, raise a TagNotFound exception.
     :param tag:
     :return:
     """
-    with open(MAPPING_FILE_NAME, 'r') as mapping_file:
-        map = dict(tuple(line.split(None,-1) for line in mapping_file))
-        tt = map.get(tag)
-        if tt:
-            return tt
+    tt_dest_map = {k: (tt, dest) for k, tt, dest in
+                   (line.strip().split(None, 2) for line in
+                    mapping_file.readlines())}
+    tt_dest = tt_dest_map.get(tag)
+    if tt_dest:
+        return tt_dest
 
-        raise TagNotFound
+    raise TagNotFound
 
 
-def record_line(tag, time_stamp):
+def record_line(tag, time_stamp, destination):
     """
-    Return the (tag time_stamp) pair, for appending the mapping file
+    Return the (tag, time_stamp, destination) pair, for appending the mapping file
     @:type tag: str
     @:type time_stamp: str
+    @:type destination: str
     :rtype str: a formatted string like 'tag time_stamp'
     """
-    return '{} {}\n'.format(tag, time_stamp)
+    return '{} {} {}\n'.format(tag, time_stamp, destination)
 
 
 def new_name():
@@ -50,6 +54,11 @@ def new_name():
     Which should be removed from the available devices list.
 """
 exclusive_map = {'TYPE': ['lvm', 'loop', 'rom', 'dm']}
+
+"""
+    Defines what columns would get from the `lsblk` command
+"""
+device_info_column = ['NAME', 'TYPE', 'MODEL', 'SERIAL', 'SIZE']
 
 
 def filter_devices_dec(fun):
@@ -82,9 +91,22 @@ def available_devices():
     :return:A list of dictionaries. Each dictionary is a block device.
     """
     devices = []
-    cmd = 'lsblk -Pn -o NAME,TYPE,LABEL,MODEL,SERIAL,SIZE'
+    cmd = 'lsblk -Pn'
+    if len(device_info_column) > 0:
+        cmd = cmd + ' -o ' + ','.join(device_info_column)
     output = subprocess.check_output(cmd.split(' '))
     for line in output.splitlines():
         d = {k: v[1:].strip() for k, v in (p.split('=') for p in line.split('" '))}
         devices.append(d)
     return devices
+
+
+def parent_path(path):
+    """
+    Get the parent path of the given path
+    :param path:
+    :return: parent path
+    """
+    if path[-1] == '/':
+        path = path[:-1]
+    return os.path.split(path)[0]
