@@ -24,6 +24,12 @@ class RestoreOperation(Operation):
     def will_finish(self):
         pass
 
+    @staticmethod
+    def all_tags(device_path):
+        with open(os.path.join(device_path, Operation.MAPPING_FILE), 'r') as map_file:
+            tags = [tag for tag, tt, dest in (line.split() for line in map_file.readlines())]
+            return tags
+
 if __name__ == '__main__':
-    op = RestoreOperation('/root/tst_cpio', '2015-04-22_11:10:00')
-    op.do()
+    # op = RestoreOperation('/root/tst_cpio', '2015-04-22_11:10:00')
+    print(RestoreOperation.all_tags('/root/tst_cpio'))

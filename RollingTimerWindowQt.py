@@ -2,6 +2,9 @@
 from PyQt4 import QtGui, QtCore
 from PyQt4.QtGui import *
 import sys, sip
+import utils
+import BackupOperation, RestoreOperation
+from multiprocessing import Pool
 
 
 class RollingTimerWindow(QDialog):
@@ -14,6 +17,7 @@ class RollingTimerWindow(QDialog):
 
     def __init__(self):
         super(RollingTimerWindow, self).__init__()
+        self.versions = None
         self.showFullScreen()
         self.to_selection_page()
 
@@ -81,7 +85,8 @@ class RollingTimerWindow(QDialog):
         # List of all available backup devices
         device_list = QListWidget(self)
         device_list.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        device_list.insertItem(0, 'Hello')
+        device_list.setSelectionMode(QListWidget.SingleSelection)
+        self.set_device_list(device_list)
         h2.addWidget(device_list)
         h2.addLayout(v3)
 
@@ -93,7 +98,29 @@ class RollingTimerWindow(QDialog):
         v3.addWidget(message)
 
         buttons.rejected.connect(lambda: self.to_selection_page(v1))
-        buttons.accepted.connect(lambda: self.to_progress_page(v1))
+        buttons.accepted.connect(lambda: self.__accepted_backup(device_list, entry, v1))
+
+    def set_device_list(self, list_widget):
+        self.devices = utils.available_devices()
+        self.devices = [{'NAME': '/root/tst_cpio', 'SIZE': '8G'},
+                        {'NAME':'/root/hello', 'SIZE': '7G'}]  #TODO: delete after test
+        for item in self.devices:
+            item_str = 'Name:{} -- Size:{}'.format(item['NAME'], item['SIZE'])
+            QListWidgetItem(parent=list_widget).setText(item_str)
+
+    def __accepted_backup(self, device_list, entry, toplevel_layout):
+        if not device_list.selectedItems():
+            device_list.setItemSelected(device_list.item(0), True)
+        for i in range(len(self.devices)):
+            if device_list.isItemSelected(device_list.item(i)):
+                break
+        selected_device = self.devices[i]
+        tag_string = entry.text()
+        print(selected_device)
+        print(tag_string)
+        op = BackupOperation.BackupOperation('~/rpmbuild', '~/tst_cpio', tag_string)
+        self.to_progress_page(op, toplevel_layout, 'Backup')
+
 
     def to_restore_page(self, previous_layout=None, title='Restore'):
         """
@@ -121,28 +148,74 @@ class RollingTimerWindow(QDialog):
         image.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         # Lists all available devices
         device_list = QListWidget(self)
+        device_list.setSelectionMode(QListWidget.SingleSelection)
         device_list.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        device_list.insertItem(0, "Device01")
+        self.set_device_list(device_list)
+        if len(self.devices) > 0:
+            device_list.setItemSelected(device_list.item(0), True)
+
+        device_list.currentRowChanged.connect(self.__changed_device_selection)
         # Help message
         help_message = QLabel("help message", self)
         help_message.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         # Lists all backup versions of the selected device
-        version_list = QListWidget(self)
-        version_list.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        version_list.insertItem(0, "version 01")
+        self.version_list = QListWidget(self)
+        self.version_list.setSelectionMode(QListWidget.SingleSelection)
+        self.version_list.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.set_version_list(self.version_list)
 
         v1.addWidget(image, 1)
         v1.addLayout(h2, 3)
         v1.addWidget(buttons)
-        h2.addLayout(v3)
-        h2.addWidget(version_list)
+        h2.addLayout(v3, 2)
+        h2.addStretch(1)
+        h2.addWidget(self.version_list, 3)
         v3.addWidget(device_list, 3)
         v3.addWidget(help_message, 1)
 
-        buttons.accepted.connect(lambda: self.to_progress_page(v1))
+        buttons.accepted.connect(lambda: self.__accepted_restore(device_list, self.version_list, v1))
         buttons.rejected.connect(lambda: self.to_selection_page(v1))
 
-    def to_progress_page(self, remove_layout=None, title='Progress'):
+    def __changed_device_selection(self, current_row):
+        device = self.devices[current_row]
+        self.versions = RestoreOperation.RestoreOperation.all_tags(device['NAME'])
+        self.set_version_list(self.version_list)
+
+    def set_version_list(self, list_widget):
+        list_widget.clear()
+        if self.versions and len(self.versions):
+            for item in self.versions:
+                QListWidgetItem(list_widget).setText(item)
+
+    def __accepted_restore(self, device_list, version_list, toplevel_layout):
+        # Auto select device that has backups
+        if not device_list.selectedItems():
+            for i in range(len(self.devices)):
+                device = self.devices[i]
+                versions = RestoreOperation.RestoreOperation.all_tags(device['NAME'])
+                if len(versions) > 0:
+                    device_list.setItemSelected(device_list.item(i), True)
+                    self.versions = versions
+        # Auto select version
+        if not version_list.selectedItems():
+            if len(self.versions) > 0:
+                version_list.setItemSelected(version_list.item(0), True)
+
+        for i in range(len(self.devices)):
+            if device_list.isItemSelected(device_list.item(i)):
+                break
+        selected_device = self.devices[i]
+        for i in range(len(self.versions)):
+            if version_list.isItemSelected(version_list.item(i)):
+                break
+        selected_tag = self.versions[i]
+
+        op = RestoreOperation.RestoreOperation(selected_device['NAME'], selected_tag)
+        self.to_progress_page(op, toplevel_layout, 'Restore')
+
+
+
+    def to_progress_page(self, operation, remove_layout=None, title='Progress'):
         """
         Progress page.
         A progress bar indicates the progress of the restore/backup operation.
@@ -180,6 +253,7 @@ class RollingTimerWindow(QDialog):
         #h2.addWidget(file_label)
 
         buttons.accepted.connect(lambda: self.to_selection_page(v1)) #TODO: Only for debug
+        operation.do()
 
     def __remove_widgets(self, layout=None):
         """

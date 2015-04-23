@@ -30,7 +30,7 @@ class BackupOperation(Operation):
             tag = self.tag
         else:
             tag = name
-        with open(os.path.join(self.destination, Operation.MAPPING_FILE), 'w+') as map_file:
+        with open(os.path.join(self.destination, Operation.MAPPING_FILE), 'a') as map_file:
             map_file.writelines(utils.record_line(tag, name, self.src))
 
     def will_finish(self):

@@ -53,7 +53,7 @@ def new_name():
     Indicates what values in what keys is NOT available for that device.
     Which should be removed from the available devices list.
 """
-exclusive_map = {'TYPE': ['lvm', 'loop', 'rom', 'dm']}
+exclusive_map = {'TYPE': ['lvm', 'loop', 'rom', 'dm', 'disk']}
 
 """
     Defines what columns would get from the `lsblk` command
@@ -96,7 +96,8 @@ def available_devices():
         cmd = cmd + ' -o ' + ','.join(device_info_column)
     output = subprocess.check_output(cmd.split(' '))
     for line in output.splitlines():
-        d = {k: v[1:].strip() for k, v in (p.split('=') for p in line.split('" '))}
+        line = line + ' '
+        d = {k: v[1:].strip() for k, v in (p.split('=') for p in line.split('" ') if len(p))}
         devices.append(d)
     return devices
 
