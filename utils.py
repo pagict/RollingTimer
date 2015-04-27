@@ -1,8 +1,16 @@
 import time
 import subprocess
 import os.path
-MAPPING_FILE_NAME = 'mappings'
+import collections
+Map = collections.namedtuple('Map', ['tt', 'destination', 'tag'])
 
+"""
+The mapping file is for time-stamp:destination:tag mapping.
+Each line in file should be treated as a tuple whose structure is
+`time-stamp-string  destination-string  tag-string`. Elements are
+separated by space. In case that tag may has space within, the split
+method should set a maximum split count.
+"""
 
 class TagNotFound(Exception):
     """
@@ -11,33 +19,27 @@ class TagNotFound(Exception):
     pass
 
 
-def time_stamp_destination_from_tag(mapping_file, tag):
+def all_mappings(mapping_file):
     """
-    Read the (tag time_stamp destination) mapping file, find the
-    (time_stamp string destination_path) tuple correspondent to
-     the tag. If no this tag, raise a TagNotFound exception.
-    :param tag:
-    :return:
+    Read the mapping file, return a list of named tuple
+    :param mapping_file: a mapping file stream
+    :return: a list
     """
-    tt_dest_map = {k: (tt, dest) for k, tt, dest in
-                   (line.strip().split(None, 2) for line in
-                    mapping_file.readlines())}
-    tt_dest = tt_dest_map.get(tag)
-    if tt_dest:
-        return tt_dest
-
-    raise TagNotFound
+    map_list = [Map(tt=tt, destination=dest, tag=tg) for tt, dest, tg in
+                (line.strip().split(None, 2) for line in
+                    mapping_file.readlines())]
+    return map_list
 
 
 def record_line(tag, time_stamp, destination):
     """
-    Return the (tag, time_stamp, destination) pair, for appending the mapping file
+    Return the (time_stamp, destination, tag) string, for appending the mapping file
     @:type tag: str
     @:type time_stamp: str
     @:type destination: str
     :rtype str: a formatted string like 'tag time_stamp'
     """
-    return '{} {} {}\n'.format(tag, time_stamp, destination)
+    return '{} {} {}\n'.format(time_stamp, destination, tag)
 
 
 def new_name():
@@ -96,7 +98,7 @@ def available_devices():
         cmd = cmd + ' -o ' + ','.join(device_info_column)
     output = subprocess.check_output(cmd.split(' '))
     for line in output.splitlines():
-        line = line + ' '
+        line += ' '
         d = {k: v[1:].strip() for k, v in (p.split('=') for p in line.split('" ') if len(p))}
         devices.append(d)
     return devices

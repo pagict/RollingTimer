@@ -8,7 +8,11 @@ class RestoreOperation(Operation):
     def __init__(self, src_dir, tag):
         super(RestoreOperation, self).__init__()
         with open(os.path.join(src_dir, Operation.MAPPING_FILE), 'r') as mapping_file:
-            self.src, self.destination = utils.time_stamp_destination_from_tag(mapping_file, tag)
+            map_list = utils.all_mappings(mapping_file)
+            for m in map_list:
+                if m.tag == tag:
+                    self.src, self.destination = m.tt, m.destination
+                    break
         self.src = os.path.join(src_dir, self.src) + Operation.EXTENSION
         self.cmd = 'cpio -iv'.split(' ')
 
