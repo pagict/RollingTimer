@@ -1,39 +1,41 @@
-from Operation import Operation
+import Operation
 import os
 import subprocess
 import utils
 
 
-class RestoreOperation(Operation):
-    def __init__(self, src_dir, tag):
+class RestoreOperation(Operation.Operation):
+    def __init__(self, from_device_dict, from_version):
         super(RestoreOperation, self).__init__()
-        with open(os.path.join(src_dir, Operation.MAPPING_FILE), 'r') as mapping_file:
-            map_list = utils.all_mappings(mapping_file)
-            for m in map_list:
-                if m.tag == tag:
-                    self.src, self.destination = m.tt, m.destination
-                    break
-        self.src = os.path.join(src_dir, self.src) + Operation.EXTENSION
-        self.cmd = 'cpio -iv'.split(' ')
+
+        self.tag = from_version.tag
+        self.destination_name = from_version.destination
+        self.tt = from_version.tt
+
+        self.src_dict = from_device_dict
+        self.destination_dict = {}
+        self.old_path = os.getcwd()
 
     def will_begin(self):
-        pass
+        # get the destination device_dict by its name
+        for device in Operation.Operation.devices():
+            if device['NAME'] == self.destination_name:
+                self.destination_dict = device
+                break
+        # mount destination
+        utils.mount_device(self.destination_dict)
+        # mount src device
+        utils.mount_device(self.src_dict)
+        os.chdir(self.destination_dict['MOUNTPOINT'])
 
     def _do_internal(self):
-        parent = utils.parent_path(self.destination)
-        os.chdir(parent)
-        with open(self.src, 'rb') as tar_file:
-            subprocess.Popen(self.cmd, stdin=tar_file, stdout=subprocess.PIPE)
+        cmd = 'cpio -iv'.split()
+        src_file_name = os.path.join(self.src_dict['MOUNTPOINT'],
+                                     self.tt + Operation.Operation.EXTENSION)
+        with open(src_file_name, 'rb') as tar_file:
+            subprocess.Popen(cmd, stdin=tar_file, stdout=subprocess.PIPE)
 
     def will_finish(self):
-        pass
-
-    @staticmethod
-    def all_tags(device_path):
-        with open(os.path.join(device_path, Operation.MAPPING_FILE), 'r') as map_file:
-            tags = [tag for tag, tt, dest in (line.split() for line in map_file.readlines())]
-            return tags
-
-if __name__ == '__main__':
-    # op = RestoreOperation('/root/tst_cpio', '2015-04-22_11:10:00')
-    print(RestoreOperation.all_tags('/root/tst_cpio'))
+        utils.umount_device(self.destination_dict)
+        utils.umount_device(self.src_dict)
+        os.chdir(self.old_path)

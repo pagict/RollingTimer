@@ -1,8 +1,11 @@
 import time
 import subprocess
-import os.path
+import os
+import uuid
 import collections
 Map = collections.namedtuple('Map', ['tt', 'destination', 'tag'])
+
+DEFAULT_BACKUP_DIR_NAME = 'Backups'
 
 """
 The mapping file is for time-stamp:destination:tag mapping.
@@ -11,12 +14,6 @@ Each line in file should be treated as a tuple whose structure is
 separated by space. In case that tag may has space within, the split
 method should set a maximum split count.
 """
-
-class TagNotFound(Exception):
-    """
-    When a tag didn't exist in the mappings file, raise a TagNotFound exception
-    """
-    pass
 
 
 def all_mappings(mapping_file):
@@ -31,7 +28,7 @@ def all_mappings(mapping_file):
     return map_list
 
 
-def record_line(tag, time_stamp, destination):
+def record_line(time_stamp, destination, tag):
     """
     Return the (time_stamp, destination, tag) string, for appending the mapping file
     @:type tag: str
@@ -55,19 +52,24 @@ def new_name():
     Indicates what values in what keys is NOT available for that device.
     Which should be removed from the available devices list.
 """
-exclusive_map = {'TYPE': ['lvm', 'loop', 'rom', 'dm', 'disk']}
-
+exclusive_map = {'NAME': ['sr0', 'sda2'],
+                 'TYPE': ['disk', 'rom', 'loop', 'dm'], }
 """
     Defines what columns would get from the `lsblk` command
 """
-device_info_column = ['NAME', 'TYPE', 'MODEL', 'SERIAL', 'SIZE']
+device_info_column = ['NAME', 'TYPE', 'MODEL', 'SERIAL', 'SIZE', 'MOUNTPOINT']
+
+
+def special_care_for_sda3(device_list):
+    for device in device_list:
+        if device['NAME'] == 'sda3':
+            device['MOUNTPOINT'] = os.path.join(device['MOUNTPOINT'],
+                                                DEFAULT_BACKUP_DIR_NAME)
 
 
 def filter_devices_dec(fun):
     """
     filter the devices list
-    :param fun:
-    :return:
     """
     def _dec():
         devices = fun()
@@ -82,6 +84,7 @@ def filter_devices_dec(fun):
                     to_be_removed.append(item)
             # Here we remove exclusive items. Using list comprehension for compact
             devices = [item for index, item in enumerate(devices) if item not in to_be_removed]
+        special_care_for_sda3(devices)
         return devices
     return _dec
 
@@ -113,3 +116,26 @@ def parent_path(path):
     if path[-1] == '/':
         path = path[:-1]
     return os.path.split(path)[0]
+
+
+def mount_device(device_dict):
+    if device_dict['MOUNTPOINT'] == '':
+        device_dict['MOUNTPOINT'] = '/tmp/{}'.format(uuid.uuid1())
+        os.mkdir(device_dict['MOUNTPOINT'])
+        dev_path = '/dev/'+device_dict['NAME']
+        subprocess.call('mount {} {}'.format(dev_path, device_dict['MOUNTPOINT']).split())
+    elif device_dict['NAME'] == 'sda3':
+        # Again, special care for sda3 which mounted on /run/initramfs/isoscan
+        subprocess.call('mount -o remount,rw {}'.format('/run/initramfs/isoscan').split())
+
+
+def umount_device(device_dict):
+    last_component = os.path.split(device_dict['MOUNTPOINT'])[1]
+    try:                        # The last component is a uuid string
+        uuid.UUID(last_component)
+        subprocess.call('umount {}'.format(device_dict['MOUNTPOINT']).split())
+        os.rmdir(device_dict['MOUNTPOINT'])
+        device_dict['MOUNTPOINT'] = ''
+    except ValueError:          # It mounted automatically
+        if device_dict['NAME'] == 'sda3':
+            subprocess.call('mount -o remount,ro {}'.format(device_dict['MOUNTPOINT']).split())
