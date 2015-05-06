@@ -127,10 +127,12 @@ class RollingTimerWindow(QDialog):
         selected_device = self.devices_list[i]
         tag_string = entry.text()
 
-        if __debug__:
-            print(selected_device)
-            print(tag_string)
         src_dict = {'NAME': 'sda1', 'MOUNTPOINT': ''}
+        # If available, get the src_dict from cache
+        for i in self.devices_list:
+            if i['NAME'] == 'sda1':
+                src_dict = i
+                break
 
         op = BackupOperation.BackupOperation(src_dict, selected_device, tag_string)
         self.to_progress_page(op, toplevel_layout, 'Backup')

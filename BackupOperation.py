@@ -4,7 +4,7 @@ import os
 import utils
 import copy
 
-OUTPUT_BUFFER_SIZE = 1024
+OUTPUT_BUFFER_SIZE = 512
 
 
 class BackupOperation(Operation):
@@ -22,27 +22,12 @@ class BackupOperation(Operation):
 
     def _do_internal(self):
         pipe1_cmd = 'find'.split()
-        pipe2_cmd = 'cpio -ov'.split()
         name = utils.new_name()
         destination_file = os.path.join(self.destination['MOUNTPOINT'],
                                         name + Operation.EXTENSION)
         op1 = subprocess.Popen(pipe1_cmd, stdout=subprocess.PIPE)
-        op2 = subprocess.Popen(
-            pipe2_cmd, stdin=op1.stdout,
-            stderr=subprocess.PIPE, stdout=subprocess.PIPE,
-            bufsize=OUTPUT_BUFFER_SIZE)
-        with open(destination_file, 'wb') as tar_file:
-            for c in iter(lambda: op2.stdout.read(1), ''):
-                tar_file.write(c)
-        # tar_file.write(subprocess.check_output(pipe2_cmd, stdin=op1.stdout))
-
-        # op2 = subprocess.Popen(pipe2_cmd, stdin=op1.stdout, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
-        # op1.stdout.close()
-        # tar_data = op2.communicate()
-        #
-        # tar_file = open(destination_file, 'wb')
-        # tar_file.write(tar_data[0])
-        # tar_file.close()
+        pipe2_cmd = 'cpio -ov --file={}'.format(destination_file).split()
+        subprocess.Popen(pipe2_cmd, stdin=op1.stdout, bufsize=OUTPUT_BUFFER_SIZE)
 
         if self.tag:
             tag = self.tag

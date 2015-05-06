@@ -29,11 +29,10 @@ class RestoreOperation(Operation.Operation):
         os.chdir(self.destination_dict['MOUNTPOINT'])
 
     def _do_internal(self):
-        cmd = 'cpio -iv'.split()
         src_file_name = os.path.join(self.src_dict['MOUNTPOINT'],
                                      self.tt + Operation.Operation.EXTENSION)
-        with open(src_file_name, 'rb') as tar_file:
-            subprocess.Popen(cmd, stdin=tar_file, stdout=subprocess.PIPE)
+        cmd = 'cpio -iv --file={}'.format(src_file_name).split()
+        subprocess.Popen(cmd)
 
     def will_finish(self):
         utils.umount_device(self.destination_dict)
