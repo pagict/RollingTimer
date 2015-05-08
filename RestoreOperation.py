@@ -15,6 +15,7 @@ class RestoreOperation(Operation.Operation):
         self.src_dict = from_device_dict
         self.destination_dict = {}
         self.old_path = os.getcwd()
+        self.op = None
 
     def will_begin(self):
         # get the destination device_dict by its name
@@ -32,7 +33,8 @@ class RestoreOperation(Operation.Operation):
         src_file_name = os.path.join(self.src_dict['MOUNTPOINT'],
                                      self.tt + Operation.Operation.EXTENSION)
         cmd = 'cpio -iv --file={}'.format(src_file_name).split()
-        subprocess.Popen(cmd)
+        self.op = subprocess.Popen(cmd)
+        self.op.wait()
 
     def will_finish(self):
         utils.umount_device(self.destination_dict)

@@ -7,7 +7,6 @@ import RestoreOperation
 import Operation
 
 
-# noinspection PyUnresolvedReferences
 class RollingTimerWindow(QDialog):
     """
     A Dialog used to simulate Assistant Window.
@@ -105,7 +104,8 @@ class RollingTimerWindow(QDialog):
         v3.addWidget(message)
 
         buttons.rejected.connect(lambda: self.to_selection_page(v1))
-        buttons.accepted.connect(lambda: self.__accepted_backup(device_list, entry, v1))
+        buttons.accepted.connect(lambda:
+                                 self.__accepted_backup(device_list, entry, v1))
 
     def set_device_list(self, list_widget):
         self.devices_list = Operation.Operation.devices()
@@ -176,7 +176,8 @@ class RollingTimerWindow(QDialog):
         # Lists all backup versions of the selected device
         self.version_list_widget = QListWidget(self)
         self.version_list_widget.setSelectionMode(QListWidget.SingleSelection)
-        self.version_list_widget.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.version_list_widget.setSizePolicy(QSizePolicy.Expanding,
+                                               QSizePolicy.Expanding)
         self.set_version_list(self.version_list_widget)
 
         v1.addWidget(image, 1)
@@ -188,7 +189,8 @@ class RollingTimerWindow(QDialog):
         v3.addWidget(device_list_widget, 3)
         v3.addWidget(help_message, 1)
 
-        buttons.accepted.connect(lambda: self.__accepted_restore(device_list_widget, self.version_list_widget, v1))
+        buttons.accepted.connect(lambda: self.__accepted_restore(
+            device_list_widget, self.version_list_widget, v1))
         buttons.rejected.connect(lambda: self.to_selection_page(v1))
 
     def __changed_device_selection(self, current_row):
