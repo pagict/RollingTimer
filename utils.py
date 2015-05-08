@@ -139,3 +139,20 @@ def umount_device(device_dict):
     except ValueError:          # It mounted automatically
         if device_dict['NAME'] == 'sda3':
             subprocess.call('mount -o remount,ro {}'.format(device_dict['MOUNTPOINT']).split())
+
+
+def size_of_path(path):
+    """
+    Get the size in byte of the given path.
+    If the path point to a file, then return the file size.
+    If the path point to a directory, return a directory size recursively.
+    (Without following symbolic links).
+    :param path:
+    :return: Size in byte
+    """
+    cmd = 'du -sb {}'.format(path).split()
+    try:
+        size, name = subprocess.check_output(cmd).split()
+        return size
+    except subprocess.CalledProcessError:
+        pass
