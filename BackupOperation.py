@@ -15,18 +15,19 @@ class BackupOperation(Operation):
         self.src = copy.deepcopy(src)
         self.destination = copy.deepcopy(destination)
         self.old_path = os.getcwd()
-        self.destination_file = ''
         self.op = None
 
     def will_begin(self):
         utils.mount_device(self.src)
         utils.mount_device(self.destination)
-        os.chdir(self.src['MOUNTPOINT'])
+        self.from_path = self.src['MOUNTPOINT']
+        os.chdir(self.from_path)
         name = utils.new_name()
-        self.destination_file = os.path.join(self.destination['MOUNTPOINT'],
-                                             name + Operation.EXTENSION)
+        self.to_path = os.path.join(self.destination['MOUNTPOINT'],
+                                    name + Operation.EXTENSION)
 
     def _do_internal(self):
+        # spawn a backend process for not blocking the GUI
         self.op = Process(target=self._process_function)
         self.op.start()
         # Won't step next until the process finishing its job
@@ -39,14 +40,14 @@ class BackupOperation(Operation):
         """
         pipe1_cmd = 'find'.split()
         op1 = subprocess.Popen(pipe1_cmd, stdout=subprocess.PIPE)
-        pipe2_cmd = 'cpio -ov --file={}'.format(self.destination_file).split()
+        pipe2_cmd = 'cpio -ov --file={}'.format(self.to_path).split()
         subprocess.Popen(pipe2_cmd,
                          stdin=op1.stdout,
                          bufsize=OUTPUT_BUFFER_SIZE)
 
     def will_finish(self):
         # Retrieve the time-stamp as the default tag
-        name = os.path.basename(self.destination_file)[:-len(Operation.EXTENSION)]
+        name = os.path.basename(self.to_path)[:-len(Operation.EXTENSION)]
         if self.tag:
             tag = self.tag
         else:
@@ -62,25 +63,3 @@ class BackupOperation(Operation):
 
         os.chdir(self.old_path)
         self.op = None
-
-    @property
-    def progress_percentage(self):
-        """
-        :return: Return the progress percentage between range(0, 100)
-        """
-        if self.op is None:
-            return 0
-        if not self.op.is_alive():
-            return 100
-
-        total_size = utils.size_of_path(self.src['MOUNTPOINT'])
-        current_size = utils.size_of_path(self.destination_file)
-        percentage = float(current_size) / float(total_size)
-        # The percentage might be larger than 1.0 for a reason,
-        # which would be the inefficiency of the tar compression algorithm,
-        # or additional information like checksum consumed the disk usage.
-        # So if the percentage goes larger than 1.0, we could assume that
-        # the the operation is done.
-        if percentage > 1.0000:
-            percentage = 1.0000
-        return int(percentage*100)

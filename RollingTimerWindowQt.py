@@ -205,7 +205,7 @@ class RollingTimerWindow(QDialog):
         :param list_widget:
         :return:
         """
-        list_widget.clear()
+        list_widget.clear()         # TODO: I'm sure I did clear the list first, but why didn't work?
         if self.versions_list and len(self.versions_list):
             for item in self.versions_list:
                 QListWidgetItem(list_widget).setText(item.tag)

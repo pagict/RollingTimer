@@ -8,6 +8,9 @@ class Operation(object):
 
     def __init__(self):
         self.args = None
+        self.op = None
+        self.from_path = None
+        self.to_path = None
 
     def will_begin(self):
         raise NotImplementedError
@@ -22,6 +25,38 @@ class Operation(object):
 
     def will_finish(self):
         raise NotImplementedError
+
+    @property
+    def progress_percentage(self):
+        """
+        :return: Return the progress percentage between range(0, 100)
+        If it's a backup operation, from_path is the backup tar file,
+            to_path is the recovery destination directory.
+        If it's a restore operation, from_path is the directory need to
+            backup, to_path is the backup tar file.
+        """
+        if self.op is None:
+            return 0
+
+        # For some mysterious reasons, this conditional statement isn't
+        # work properly. But if just remove it, the restore operation
+        # will never finish. Let's first comment it, and figure a way out.
+        # ToDO: The restore operation will never end. How to detect a
+        # ToDO:     Operation is finished?
+        # if not self.op.is_alive():
+        #   return 100
+
+        total_size = utils.size_of_path(self.from_path)
+        current_size = utils.size_of_path(self.to_path)
+        percentage = float(current_size) / float(total_size)
+        # The percentage might be larger than 1.0 for a reason,
+        # which would be the inefficiency of the tar compression algorithm,
+        # or additional information like checksum consumed the disk usage.
+        # So if the percentage goes larger than 1.0, we could assume that
+        # the the operation is done.
+        if percentage > 1.0000:
+            percentage = 1.0000
+        return int(percentage*100)
 
     devices_cache = []
 
