@@ -117,7 +117,12 @@ class RollingTimerWindow(QDialog):
     def __accepted_backup(self, device_list_widget, entry, toplevel_layout):
         # If no selection, auto select the first item
         if not device_list_widget.selectedItems():
-            device_list_widget.setItemSelected(device_list_widget.item(0), True)
+            # Now we don't offer auto selection for stability reason
+            # device_list_widget.setItemSelected(device_list_widget.item(0), True)
+            message_box = QMessageBox()
+            message_box.setText('Please select a device to store your backups!')
+            message_box.exec_()
+            return
 
         i = int()
         # Find the selection
@@ -213,6 +218,7 @@ class RollingTimerWindow(QDialog):
     def __accepted_restore(self, device_list_widget, version_list_widget, toplevel_layout):
         # Auto select device that has backups
         if not device_list_widget.selectedItems():
+            """
             for i in range(len(self.devices_list)):
                 device = self.devices_list[i]
                 versions = Operation.Operation.versions_from_device(device)
@@ -220,10 +226,21 @@ class RollingTimerWindow(QDialog):
                 if len(tags) > 0:
                     device_list_widget.setItemSelected(device_list_widget.item(i), True)
                     self.versions_list = tags
-        # Auto select version
+            """
+            # Now we won't offer device auto selection, do it yourself.
+            message_box = QMessageBox()
+            message_box.setText('Please select a device where stored your backups!')
+            message_box.exec_()
+            return
+        # No more Auto select version
         if not version_list_widget.selectedItems():
-            if len(self.versions_list) > 0:
-                version_list_widget.setItemSelected(version_list_widget.item(0), True)
+            # if len(self.versions_list) > 0:
+            #     version_list_widget.setItemSelected(version_list_widget.item(0), True)
+            message_box = QMessageBox()
+            message_box.setText('Please select a version you want to restore to!')
+            message_box.exec_()
+            return
+
         i = int()
         # Get selected device
         for i in range(len(self.devices_list)):
@@ -237,7 +254,7 @@ class RollingTimerWindow(QDialog):
         version_of_selected_tag = self.versions_list[i]
 
         op = RestoreOperation.RestoreOperation(selected_device, version_of_selected_tag)
-        self.to_progress_page(op, toplevel_layout, 'Restore')
+        self.to_progress_page(op, toplevel_layout, 'Restore')  # Here the devil thing begins
 
     def to_progress_page(self, operation, remove_layout=None, title='Progress'):
         """
