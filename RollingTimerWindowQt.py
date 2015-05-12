@@ -297,7 +297,6 @@ class RollingTimerWindow(QDialog):
             style=styles, color=theme_color)
         progress_bar.setStyleSheet(more_style)
         progress_bar.setTextVisible(True)
-        progress_bar.setValue(50)
         time_label = QLabel("Time", self)
         time_label.setStyleSheet(styles)
         # file_label = QLabel("File", self)
