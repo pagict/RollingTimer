@@ -22,7 +22,7 @@ styles = "QWidget {border: none;" \
          "background-color: #ddd;}" \
          "QLabel {font-size: 20px;" \
          "color: #505050;}" \
-         "QProgressBar {border-radius: 10px;" \
+         "QProgressBar::chunk, QProgressBar {border-radius: 10px;" \
          "text-align: center;}"
 
 
