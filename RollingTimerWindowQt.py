@@ -1,4 +1,6 @@
+#!/bin/python2
 from threading import Timer
+import threading
 from PyQt4 import QtGui, QtCore
 from PyQt4.QtGui import *
 import sys
@@ -295,7 +297,7 @@ class RollingTimerWindow(QDialog):
 
         buttons.accepted.connect(lambda: self.to_selection_page(v1))
         Timer(1.0, self.update_progressbar, (progress_bar, operation)).start()
-        operation.do()
+        threading.Thread(target=operation.do).start()
 
     def update_progressbar(self, progressbar_widget, operation):
         percent = operation.progress_percentage

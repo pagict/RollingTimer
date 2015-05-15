@@ -58,8 +58,8 @@ class BackupOperation(Operation):
                   'a') as map_file:
             map_file.writelines(utils.record_line(name, self.src['NAME'], tag))
 
+        os.chdir(self.old_path)
         utils.umount_device(self.src)
         utils.umount_device(self.destination)
 
-        os.chdir(self.old_path)
         self.op = None

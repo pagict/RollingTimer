@@ -44,7 +44,7 @@ class RestoreOperation(Operation.Operation):
         subprocess.Popen(cmd)
 
     def will_finish(self):
+        os.chdir(self.old_working_path)
         utils.umount_device(self.destination_dict)
         utils.umount_device(self.src_dict)
-        os.chdir(self.old_working_path)
         self.op = None
