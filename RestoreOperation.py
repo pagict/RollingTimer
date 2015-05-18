@@ -1,4 +1,3 @@
-from multiprocessing import Process
 import Operation
 import os
 import subprocess
@@ -32,16 +31,16 @@ class RestoreOperation(Operation.Operation):
                                       self.tt + Operation.Operation.EXTENSION)
         self.to_path = self.destination_dict['MOUNTPOINT']
         os.chdir(self.to_path)
+    #
+    # def _do_internal(self):
+    #     # spawn a backend process for not blocking the GUI
+    #     self.op = Process(target=self._process_function)
+    #     self.op.start()
+    #     self.op.join()
 
     def _do_internal(self):
-        # spawn a backend process for not blocking the GUI
-        self.op = Process(target=self._process_function)
-        self.op.start()
-        self.op.join()
-
-    def _process_function(self):
         cmd = 'cpio -iv --file={}'.format(self.from_path).split()
-        subprocess.Popen(cmd)
+        subprocess.call(cmd)
 
     def will_finish(self):
         os.chdir(self.old_working_path)

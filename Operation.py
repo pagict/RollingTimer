@@ -1,12 +1,17 @@
 import utils
 import os
+import multiprocessing
+import PyQt4.QtCore
 
 
-class Operation(object):
+class Operation(PyQt4.QtCore.QObject):
     EXTENSION = '.tar'
     MAPPING_FILE = 'mapping'
 
+    finish_signal = PyQt4.QtCore.pyqtSignal()
+
     def __init__(self):
+        super(Operation, self).__init__()
         self.args = None
         self.op = None
         self.from_path = None
@@ -15,13 +20,19 @@ class Operation(object):
     def will_begin(self):
         raise NotImplementedError
 
+    def _do_process(self):
+        self.will_begin()
+        self._do_internal()
+        self.will_finish()
+
     def _do_internal(self):
         raise NotImplementedError
 
     def do(self):
-        self.will_begin()
-        self._do_internal()
-        self.will_finish()
+        op = multiprocessing.Process(target=self._do_process)
+        op.start()
+        op.join()
+        self.finish_signal.emit()
 
     def will_finish(self):
         raise NotImplementedError

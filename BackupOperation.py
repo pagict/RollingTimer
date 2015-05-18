@@ -1,4 +1,3 @@
-from multiprocessing import Process
 from Operation import Operation
 import subprocess
 import os
@@ -26,14 +25,14 @@ class BackupOperation(Operation):
         self.to_path = os.path.join(self.destination['MOUNTPOINT'],
                                     name + Operation.EXTENSION)
 
-    def _do_internal(self):
-        # spawn a backend process for not blocking the GUI
-        self.op = Process(target=self._process_function)
-        self.op.start()
-        # Won't step next until the process finishing its job
-        self.op.join()
+    # def _do_internal(self):
+    #     # spawn a backend process for not blocking the GUI
+    #     self.op = Process(target=self._process_function)
+    #     self.op.start()
+    #     # Won't step next until the process finishing its job
+    #     self.op.join()
 
-    def _process_function(self):
+    def _do_internal(self):
         """
         A backend process separate from GUI to do the real backup operation.
         :return:
@@ -41,9 +40,9 @@ class BackupOperation(Operation):
         pipe1_cmd = 'find'.split()
         op1 = subprocess.Popen(pipe1_cmd, stdout=subprocess.PIPE)
         pipe2_cmd = 'cpio -ov --file={}'.format(self.to_path).split()
-        subprocess.Popen(pipe2_cmd,
-                         stdin=op1.stdout,
-                         bufsize=OUTPUT_BUFFER_SIZE)
+        subprocess.call(pipe2_cmd,
+                        stdin=op1.stdout,
+                        bufsize=OUTPUT_BUFFER_SIZE)
 
     def will_finish(self):
         # Retrieve the time-stamp as the default tag

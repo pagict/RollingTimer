@@ -1,5 +1,4 @@
 #!/bin/python2
-from threading import Timer
 import threading
 from PyQt4 import QtGui, QtCore
 from PyQt4.QtGui import *
@@ -282,6 +281,7 @@ class RollingTimerWindow(QDialog):
         image.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
         progress_bar = QProgressBar(self)
+        progress_bar.setRange(0, 0)
         time_label = QLabel("Time", self)
         # file_label = QLabel("File", self)
 
@@ -296,14 +296,21 @@ class RollingTimerWindow(QDialog):
         # h2.addWidget(file_label)
 
         buttons.accepted.connect(lambda: self.to_selection_page(v1))
-        Timer(1.0, self.update_progressbar, (progress_bar, operation)).start()
+        # Timer(1.0, self.update_progressbar, (progress_bar, operation)).start()
+        operation.finish_signal.connect(lambda: self.progress_finish(progress_bar))
         threading.Thread(target=operation.do).start()
 
-    def update_progressbar(self, progressbar_widget, operation):
-        percent = operation.progress_percentage
-        progressbar_widget.setValue(percent)
-        if percent < 100:
-            Timer(1.0, self.update_progressbar, (progressbar_widget, operation)).start()
+    @staticmethod
+    def progress_finish(progressbar_widget):
+        progressbar_widget.reset()
+        progressbar_widget.setRange(0, 100)
+        progressbar_widget.setValue(100)
+
+    # def update_progressbar(self, progressbar_widget, operation):
+    #     percent = operation.progress_percentage
+    #     progressbar_widget.setValue(percent)
+    #     if percent < 100:
+    #         Timer(1.0, self.update_progressbar, (progressbar_widget, operation)).start()
 
     def __remove_widgets(self, layout=None):
         """
