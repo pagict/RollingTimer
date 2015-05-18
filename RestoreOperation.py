@@ -1,3 +1,4 @@
+import shutil
 import Operation
 import os
 import subprocess
@@ -30,6 +31,17 @@ class RestoreOperation(Operation.Operation):
         self.from_path = os.path.join(self.src_dict['MOUNTPOINT'],
                                       self.tt + Operation.Operation.EXTENSION)
         self.to_path = self.destination_dict['MOUNTPOINT']
+
+        """
+        Delete all destination files before restore.
+        This is an ugly implementation for not containing the added files
+        after that backup.
+        """
+        for root, dirs, files in os.walk(self.to_path):
+            for f in files:
+                os.remove(os.path.join(root, f))
+            for d in dirs:
+                shutil.rmtree(os.path.join(root, d), True)
         os.chdir(self.to_path)
     #
     # def _do_internal(self):
