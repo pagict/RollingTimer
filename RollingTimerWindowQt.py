@@ -2,11 +2,30 @@
 import threading
 from PyQt4 import QtGui, QtCore
 from PyQt4.QtGui import *
+from string import Template
 import sys
 import sip
 import BackupOperation
 import RestoreOperation
 import Operation
+
+BACKUP_MESSAGE = 'Select a device listed on the left where to store ' \
+                 'the backups. And you can optionally add a tag of this ' \
+                 'backup as above.'
+RESTORE_MESSAGE = 'Select a device listed above where your backups stored ' \
+                  'and a particular backup on the right.'
+
+
+theme_color = '#0b7cc2'
+
+styles = "QWidget {border: none;" \
+         "background: none;}" \
+         "QPushButton {color:#111;" \
+         "background-color: #ddd;}" \
+         "QLabel {font-size: 20px;" \
+         "color: #505050;}" \
+         "QProgressBar::chunk, QProgressBar {border-radius: 10px;" \
+         "text-align: center;}"
 
 
 class RollingTimerWindow(QDialog):
@@ -46,15 +65,21 @@ class RollingTimerWindow(QDialog):
         image = QWidget(self)
         image.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         image.setAutoFillBackground(True)
-        p = image.palette()
-        p.setColor(image.backgroundRole(), QtGui.QColor('#fff0d0'))
-        image.setPalette(p)
+        image_style = styles + 'QWidget {background-color:'+theme_color+';}'
+        image.setStyleSheet(image_style)
         # Restore Button
+        big_button_style = Template(r'$style QPushButton {font-size:45px;}'
+                                    r' QPushButton:hover {color:'
+                                    r'$color;}').substitute(style=styles,
+                                                            color=theme_color)
+
         to_restore = QPushButton(QtCore.QString("Restore"), self)
         to_restore.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        to_restore.setStyleSheet(big_button_style)
         # Backup Button
         to_backup = QPushButton(QtCore.QString("Backup"), self)
         to_backup.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        to_backup.setStyleSheet(big_button_style)
 
         v1.addWidget(image, 1)
         v1.addLayout(h2, 3)
@@ -75,6 +100,7 @@ class RollingTimerWindow(QDialog):
         self.__remove_widgets(previous_layout)
 
         buttons = QDialogButtonBox(QDialogButtonBox.Cancel | QDialogButtonBox.Ok)
+        buttons.setStyleSheet(styles)
         v1 = QVBoxLayout(self)
         h2 = QHBoxLayout()
         v3 = QVBoxLayout()
@@ -82,10 +108,9 @@ class RollingTimerWindow(QDialog):
         # Header Widget
         image = QWidget(self)
         image.setAutoFillBackground(True)
-        p = image.palette()
-        p.setColor(image.backgroundRole(), QColor('#fff0d0'))
-        image.setPalette(p)
         image.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        img_style = styles + 'QWidget {background-color:'+theme_color+';}'
+        image.setStyleSheet(img_style)
         v1.addWidget(image, 1)
         v1.addLayout(h2, 3)
         v1.addWidget(buttons)
@@ -94,14 +119,18 @@ class RollingTimerWindow(QDialog):
         device_list = QListWidget(self)
         device_list.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         device_list.setSelectionMode(QListWidget.SingleSelection)
+        device_list.setStyleSheet(styles)
         self.set_device_list(device_list)
         h2.addWidget(device_list)
         h2.addLayout(v3)
 
         # Entry for tagging this backup version
         entry = QLineEdit(self)
+        entry.setStyleSheet(styles)
         # Help message
-        message = QLabel("Message", self)
+        message = QLabel(BACKUP_MESSAGE, self)
+        message.setWordWrap(True)
+        message.setStyleSheet(styles)
         v3.addWidget(entry)
         v3.addWidget(message)
 
@@ -156,6 +185,7 @@ class RollingTimerWindow(QDialog):
         self.__remove_widgets(previous_layout)
 
         buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        buttons.setStyleSheet(styles)
 
         v1 = QVBoxLayout(self)
         h2 = QHBoxLayout()
@@ -164,27 +194,30 @@ class RollingTimerWindow(QDialog):
         # Header Widget for title
         image = QWidget(self)
         image.setAutoFillBackground(True)
-        p = image.palette()
-        p.setColor(image.backgroundRole(), QColor('#fff0d0'))
-        image.setPalette(p)
         image.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        image_style = styles + 'QWidget {background-color:' + theme_color + ';}'
+        image.setStyleSheet(image_style)
         # Lists all available devices
         device_list_widget = QListWidget(self)
         device_list_widget.setSelectionMode(QListWidget.SingleSelection)
         device_list_widget.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        device_list_widget.setStyleSheet(styles)
         self.set_device_list(device_list_widget)
         # select the first item as initiate the page
         if len(self.devices_list) > 0:
             device_list_widget.setItemSelected(device_list_widget.item(0), True)
         device_list_widget.currentRowChanged.connect(self.__changed_device_selection)
         # Help message
-        help_message = QLabel("help message", self)
+        help_message = QLabel(RESTORE_MESSAGE, self)
+        help_message.setWordWrap(True)
         help_message.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        help_message.setStyleSheet(styles)
         # Lists all backup versions of the selected device
         self.version_list_widget = QListWidget(self)
         self.version_list_widget.setSelectionMode(QListWidget.SingleSelection)
         self.version_list_widget.setSizePolicy(QSizePolicy.Expanding,
                                                QSizePolicy.Expanding)
+        self.version_list_widget.setStyleSheet(styles)
         self.set_version_list(self.version_list_widget)
 
         v1.addWidget(image, 1)
@@ -269,20 +302,26 @@ class RollingTimerWindow(QDialog):
         self.__remove_widgets(remove_layout)
 
         buttons = QDialogButtonBox(QDialogButtonBox.Ok)
+        buttons.setStyleSheet(styles)
         v1 = QVBoxLayout(self)
         h2 = QHBoxLayout()
 
         # Header Widget for title
         image = QWidget(self)
         image.setAutoFillBackground(True)
-        p = image.palette()
-        p.setColor(image.backgroundRole(), QColor('#fff0d0'))
-        image.setPalette(p)
         image.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        image_style = styles + 'QWidget {background-color:' + theme_color + ';}'
+        image.setStyleSheet(image_style)
 
         progress_bar = QProgressBar(self)
         progress_bar.setRange(0, 0)
+        more_style = Template(r'$style QProgressBar::chunk '
+                              r'{background-color: $color;}').substitute(
+            style=styles, color=theme_color)
+        progress_bar.setStyleSheet(more_style)
+        progress_bar.setTextVisible(True)
         time_label = QLabel("Time", self)
+        time_label.setStyleSheet(styles)
         # file_label = QLabel("File", self)
 
         v1.addWidget(image, 1)
@@ -323,7 +362,7 @@ class RollingTimerWindow(QDialog):
         while layout.count():
             child = layout.takeAt(0)
             if child.widget():
-                child.widget().deleteLater()
+                sip.delete(child.widget())
             else:
                 # remove widgets in the sub layout
                 self.__remove_widgets(child.layout())
