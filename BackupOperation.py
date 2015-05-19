@@ -1,4 +1,4 @@
-from Operation import Operation
+import Operation
 import subprocess
 import os
 import utils
@@ -7,7 +7,7 @@ import copy
 OUTPUT_BUFFER_SIZE = 512
 
 
-class BackupOperation(Operation):
+class BackupOperation(object, Operation.Operation):
     def __init__(self, src, destination, tag=None):
         super(BackupOperation, self).__init__()
         self.tag = tag
@@ -23,7 +23,7 @@ class BackupOperation(Operation):
         os.chdir(self.from_path)
         name = utils.new_name()
         self.to_path = os.path.join(self.destination['MOUNTPOINT'],
-                                    name + Operation.EXTENSION)
+                                    name + Operation.Operation.EXTENSION)
 
     # def _do_internal(self):
     #     # spawn a backend process for not blocking the GUI
@@ -46,14 +46,14 @@ class BackupOperation(Operation):
 
     def will_finish(self):
         # Retrieve the time-stamp as the default tag
-        name = os.path.basename(self.to_path)[:-len(Operation.EXTENSION)]
+        name = os.path.basename(self.to_path)[:-len(Operation.Operation.EXTENSION)]
         if self.tag:
             tag = self.tag
         else:
             tag = name
         # write mapping file
         with open(os.path.join(self.destination['MOUNTPOINT'],
-                               Operation.MAPPING_FILE),
+                               Operation.Operation.MAPPING_FILE),
                   'a') as map_file:
             map_file.writelines(utils.record_line(name, self.src['NAME'], tag))
 

@@ -1,6 +1,6 @@
 #!/bin/python2
 import threading
-from PyQt4 import QtGui, QtCore
+from PyQt4 import QtCore
 from PyQt4.QtGui import *
 from string import Template
 import sys

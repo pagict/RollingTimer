@@ -5,7 +5,7 @@ import subprocess
 import utils
 
 
-class RestoreOperation(Operation.Operation):
+class RestoreOperation(object, Operation.Operation):
     def __init__(self, from_device_dict, from_version):
         super(RestoreOperation, self).__init__()
 

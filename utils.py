@@ -139,7 +139,7 @@ def umount_device(device_dict):
     except ValueError:          # It mounted automatically
         # special care for sda3
         if device_dict['NAME'] == 'sda3':
-            subprocess.call('mount -o remount,ro {}'.format('/run/initrams/isoscan').split())
+            subprocess.call('mount -o remount,ro {}'.format('/run/initramfs/isoscan').split())
 
 
 def size_of_path(path):
