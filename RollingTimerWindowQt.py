@@ -46,7 +46,7 @@ class RollingTimerWindow(QDialog):
         self.version_list_widget = None
         self.devices_list = None
         self.showFullScreen()
-        self.to_selection_page()
+        # self.to_selection_page()
 
     def to_selection_page(self, previous_layout=None, title='RollingTimer'):
         """
@@ -369,9 +369,40 @@ class RollingTimerWindow(QDialog):
         # remove the layout itself
         sip.delete(layout)
 
+    def show(self, to_page_fun=None):
+        """
+        Override show from Class QWidget.
+        To specify which page to go to when the window show.
+        By default, to_selection_page.
+        :type to_page_fun: a callable method of the RollingTimerWindow instance.
+        """
+        if not to_page_fun:
+            to_page_fun = self.to_selection_page
+        to_page_fun()
+        super(RollingTimerWindow, self).show()
+
+def show_RollingTimer_window(page_arg='selection'):
+    app = QApplication(None)
+    win = RollingTimerWindow()
+
+    # build the method name from action we received
+    method_name = "to_{}_page".format(page_arg)
+    import inspect
+    method_fun_tuple = filter(lambda name: name[0] == method_name,
+                              inspect.getmembers(win, inspect.ismethod))
+    # traverse all method to match the one we want
+    win.show(method_fun_tuple[0][1])
+
+    sys.exit(app.exec_())
+
 
 if __name__ == '__main__':
-    app = QApplication(sys.argv)
-    win = RollingTimerWindow()
-    win.show()
-    sys.exit(app.exec_())
+    arg = "selection"
+    # parse action argument from command line.
+    if len(sys.argv) == 2 and sys.argv[0] != "python":
+        # cmd like `RollingTimer backup`
+        arg = sys.argv[1]
+    elif len(sys.argv) == 3 and sys.argv[0] == "python":
+        # cmd like `python RollingTimer backup`
+        arg = sys.argv[2]
+    show_RollingTimer_window(arg)

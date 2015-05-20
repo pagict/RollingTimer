@@ -7,7 +7,7 @@ import copy
 OUTPUT_BUFFER_SIZE = 512
 
 
-class BackupOperation(object, Operation.Operation):
+class BackupOperation(Operation.Operation):
     def __init__(self, src, destination, tag=None):
         super(BackupOperation, self).__init__()
         self.tag = tag
