@@ -120,7 +120,7 @@ class RollingTimerWindow(QDialog):
         device_list.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         device_list.setSelectionMode(QListWidget.SingleSelection)
         device_list.setStyleSheet(styles)
-        self.set_device_list(device_list)
+        self.set_device_list(device_list, BackupOperation.BackupOperation())
         h2.addWidget(device_list)
         h2.addLayout(v3)
 
@@ -138,8 +138,8 @@ class RollingTimerWindow(QDialog):
         buttons.accepted.connect(lambda:
                                  self.__accepted_backup(device_list, entry, v1))
 
-    def set_device_list(self, list_widget):
-        self.devices_list = Operation.Operation.devices()
+    def set_device_list(self, list_widget, operation):
+        self.devices_list = operation.devices()
         for item in self.devices_list:
             item_str = 'Name:{} -- Size:{}'.format(item['NAME'], item['SIZE'])
             QListWidgetItem(list_widget).setText(item_str)
@@ -170,7 +170,10 @@ class RollingTimerWindow(QDialog):
                 src_dict = i
                 break
 
-        op = BackupOperation.BackupOperation(src_dict, selected_device, tag_string)
+        op = BackupOperation.BackupOperation()
+        op.set_destination(selected_device)
+        op.set_src(src_dict)
+        op.set_tag(tag_string)
         self.to_progress_page(op, toplevel_layout, 'Backup')
 
     def to_restore_page(self, previous_layout=None, title='Restore'):
@@ -202,7 +205,7 @@ class RollingTimerWindow(QDialog):
         device_list_widget.setSelectionMode(QListWidget.SingleSelection)
         device_list_widget.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         device_list_widget.setStyleSheet(styles)
-        self.set_device_list(device_list_widget)
+        self.set_device_list(device_list_widget, RestoreOperation.RestoreOperation())
         # select the first item as initiate the page
         if len(self.devices_list) > 0:
             device_list_widget.setItemSelected(device_list_widget.item(0), True)
@@ -287,7 +290,9 @@ class RollingTimerWindow(QDialog):
                 break
         version_of_selected_tag = self.versions_list[i]
 
-        op = RestoreOperation.RestoreOperation(selected_device, version_of_selected_tag)
+        op = RestoreOperation.RestoreOperation()
+        op.set_from_device_dict(selected_device)
+        op.set_from_version(version_of_selected_tag)
         self.to_progress_page(op, toplevel_layout, 'Restore')  # Here the devil thing begins
 
     def to_progress_page(self, operation, remove_layout=None, title='Progress'):

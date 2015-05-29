@@ -52,12 +52,12 @@ def new_name():
     Indicates what values in what keys is NOT available for that device.
     Which should be removed from the available devices list.
 """
-exclusive_map = {'NAME': ['sr0', 'sda2'],
+exclusive_map = {'NAME': ['sr0', 'sda2', 'sda3'],
                  'TYPE': ['disk', 'rom', 'loop', 'dm'], }
 """
     Defines what columns would get from the `lsblk` command
 """
-device_info_column = ['NAME', 'TYPE', 'MODEL', 'SERIAL', 'SIZE', 'MOUNTPOINT']
+device_info_column = ['NAME', 'TYPE', 'MODEL', 'SERIAL', 'SIZE', 'MOUNTPOINT', 'LABEL']
 
 
 def special_care_for_sda3(device_list):
@@ -84,7 +84,7 @@ def filter_devices_dec(fun):
                     to_be_removed.append(item)
             # Here we remove exclusive items. Using list comprehension for compact
             devices = [item for index, item in enumerate(devices) if item not in to_be_removed]
-        special_care_for_sda3(devices)
+        # special_care_for_sda3(devices)
         return devices
     return _dec
 
@@ -124,9 +124,9 @@ def mount_device(device_dict):
         os.mkdir(device_dict['MOUNTPOINT'])
         dev_path = '/dev/'+device_dict['NAME']
         subprocess.call('mount {} {}'.format(dev_path, device_dict['MOUNTPOINT']).split())
-    elif device_dict['NAME'] == 'sda3':
-        # Again, special care for sda3 which mounted on /run/initramfs/isoscan
-        subprocess.call('mount -o remount,rw {}'.format('/run/initramfs/isoscan').split())
+    # elif device_dict['NAME'] == 'sda3':
+    #     # Again, special care for sda3 which mounted on /run/initramfs/isoscan
+    #     subprocess.call('mount -o remount,rw {}'.format('/run/initramfs/isoscan').split())
 
 
 def umount_device(device_dict):
@@ -138,8 +138,9 @@ def umount_device(device_dict):
         device_dict['MOUNTPOINT'] = ''
     except ValueError:          # It mounted automatically
         # special care for sda3
-        if device_dict['NAME'] == 'sda3':
-            subprocess.call('mount -o remount,ro {}'.format('/run/initramfs/isoscan').split())
+        # if device_dict['NAME'] == 'sda3':
+        #     subprocess.call('mount -o remount,ro {}'.format('/run/initramfs/isoscan').split())
+        pass
 
 
 def size_of_path(path):

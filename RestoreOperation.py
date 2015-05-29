@@ -6,17 +6,30 @@ import utils
 
 
 class RestoreOperation(Operation.Operation):
-    def __init__(self, from_device_dict, from_version):
+    def __init__(self):
         super(RestoreOperation, self).__init__()
 
-        self.tag = from_version.tag
-        self.destination_name = from_version.destination
-        self.tt = from_version.tt
+        self.tag = None
+        self.destination_name = None
+        self.tt = None
 
-        self.src_dict = from_device_dict
+        self.src_dict = None
         self.destination_dict = {}
         self.old_working_path = os.getcwd()
         self.op = None
+
+    def set_from_version(self, from_version):
+        self.destination_name = from_version.destination
+        self.tt = from_version.tt
+        self.tag = from_version.tag
+
+    def set_from_device_dict(self, from_device_dict):
+        self.src_dict = from_device_dict
+
+    @staticmethod
+    def devices():
+        device_list = super(RestoreOperation, RestoreOperation).devices()
+        return [p for p in device_list if p['NAME'] == 'sda1']
 
     def will_begin(self):
         # get the destination device_dict by its name

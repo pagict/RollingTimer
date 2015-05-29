@@ -8,13 +8,27 @@ OUTPUT_BUFFER_SIZE = 512
 
 
 class BackupOperation(Operation.Operation):
-    def __init__(self, src, destination, tag=None):
+    def __init__(self):
         super(BackupOperation, self).__init__()
-        self.tag = tag
-        self.src = copy.deepcopy(src)
-        self.destination = copy.deepcopy(destination)
+        self.tag = None
+        self.src = None
+        self.destination = None
         self.old_path = os.getcwd()
         self.op = None
+
+    def set_src(self, src):
+        self.src = copy.deepcopy(src)
+
+    def set_destination(self, destination):
+        self.destination = copy.deepcopy(destination)
+
+    def set_tag(self, tag=None):
+        self.tag = tag
+
+    @staticmethod
+    def devices():
+        device_list = super(BackupOperation, BackupOperation).devices()
+        return [p for p in device_list if p['LABEL'] == 'neokylin_backup']
 
     def will_begin(self):
         utils.mount_device(self.src)
