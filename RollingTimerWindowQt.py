@@ -42,6 +42,7 @@ class RollingTimerWindow(QDialog):
         :return:
         """
         super(RollingTimerWindow, self).__init__()
+        self.setWindowTitle('RollingTimer')
         self.versions_list = None
         self.version_list_widget = None
         self.devices_list = None
