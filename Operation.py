@@ -5,8 +5,9 @@ import PyQt4.QtCore
 
 
 class Operation(PyQt4.QtCore.QObject):
-    EXTENSION = '.tar'
+    EXTENSION = '.fsa'
     MAPPING_FILE = 'mapping'
+    BACKUP_PARTITION_LABEL = 'neokylin_backup'
 
     finish_signal = PyQt4.QtCore.pyqtSignal()
 

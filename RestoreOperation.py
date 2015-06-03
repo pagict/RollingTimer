@@ -29,7 +29,7 @@ class RestoreOperation(Operation.Operation):
     @staticmethod
     def devices():
         device_list = super(RestoreOperation, RestoreOperation).devices()
-        return [p for p in device_list if p['NAME'] == 'sda1']
+        return [p for p in device_list if p['LABEL'] == Operation.Operation.BACKUP_PARTITION_LABEL]
 
     def will_begin(self):
         # get the destination device_dict by its name
@@ -38,24 +38,26 @@ class RestoreOperation(Operation.Operation):
                 self.destination_dict = device
                 break
         # mount destination
-        utils.mount_device(self.destination_dict)
+        # utils.mount_device(self.destination_dict)
         # mount src device
         utils.mount_device(self.src_dict)
         self.from_path = os.path.join(self.src_dict['MOUNTPOINT'],
                                       self.tt + Operation.Operation.EXTENSION)
-        self.to_path = self.destination_dict['MOUNTPOINT']
+        # self.to_path = self.destination_dict['MOUNTPOINT']
 
         """
         Delete all destination files before restore.
         This is an ugly implementation for not containing the added files
         after that backup.
         """
-        for root, dirs, files in os.walk(self.to_path):
+        utils.mount_device(self.destination_dict)
+        for root, dirs, files in os.walk(self.destination_dict['MOUNTPOINT']):
             for f in files:
                 os.remove(os.path.join(root, f))
             for d in dirs:
                 shutil.rmtree(os.path.join(root, d), True)
-        os.chdir(self.to_path)
+        utils.umount_device(self.destination_dict)
+        # os.chdir(self.to_path)
     #
     # def _do_internal(self):
     #     # spawn a backend process for not blocking the GUI
@@ -64,11 +66,12 @@ class RestoreOperation(Operation.Operation):
     #     self.op.join()
 
     def _do_internal(self):
-        cmd = 'cpio -iv --file={}'.format(self.from_path).split()
+        cmd = 'fsarchiver restfs {} id=0,dest={} -v'.format(self.from_path,
+                                                             self.destination_dict['NAME']).split()
         subprocess.call(cmd)
 
     def will_finish(self):
         os.chdir(self.old_working_path)
-        utils.umount_device(self.destination_dict)
+        # utils.umount_device(self.destination_dict)
         utils.umount_device(self.src_dict)
         self.op = None

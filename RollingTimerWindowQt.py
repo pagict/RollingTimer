@@ -163,7 +163,7 @@ class RollingTimerWindow(QDialog):
         selected_device = self.devices_list[i]
         tag_string = entry.text()
 
-        src_dict = {'NAME': 'sda1', 'MOUNTPOINT': ''}
+        src_dict = {'NAME': '/dev/sda1', 'MOUNTPOINT': ''}
         # If available, get the src_dict from cache
         for i in self.devices_list:
             if i['NAME'] == 'sda1':

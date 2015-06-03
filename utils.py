@@ -52,7 +52,7 @@ def new_name():
     Indicates what values in what keys is NOT available for that device.
     Which should be removed from the available devices list.
 """
-exclusive_map = {'NAME': ['sr0', 'sda2', 'sda3'],
+exclusive_map = {'NAME': ['sr0', ],
                  'TYPE': ['disk', 'rom', 'loop', 'dm'], }
 """
     Defines what columns would get from the `lsblk` command
@@ -96,7 +96,7 @@ def available_devices():
     :return:A list of dictionaries. Each dictionary is a block device.
     """
     devices = []
-    cmd = 'lsblk -Pn'
+    cmd = 'lsblk -Ppn'
     if len(device_info_column) > 0:
         cmd = cmd + ' -o ' + ','.join(device_info_column)
     output = subprocess.check_output(cmd.split(' '))
@@ -122,8 +122,8 @@ def mount_device(device_dict):
     if device_dict['MOUNTPOINT'] == '':
         device_dict['MOUNTPOINT'] = '/tmp/{}'.format(uuid.uuid1())
         os.mkdir(device_dict['MOUNTPOINT'])
-        dev_path = '/dev/'+device_dict['NAME']
-        subprocess.call('mount {} {}'.format(dev_path, device_dict['MOUNTPOINT']).split())
+        # dev_path = '/dev/'+device_dict['NAME']
+        subprocess.call('mount {} {}'.format(device_dict['NAME'], device_dict['MOUNTPOINT']).split())
     # elif device_dict['NAME'] == 'sda3':
     #     # Again, special care for sda3 which mounted on /run/initramfs/isoscan
     #     subprocess.call('mount -o remount,rw {}'.format('/run/initramfs/isoscan').split())
@@ -132,7 +132,7 @@ def mount_device(device_dict):
 def umount_device(device_dict):
     last_component = os.path.split(device_dict['MOUNTPOINT'])[1]
     try:                        # The last component is a uuid string
-        uuid.UUID(last_component)
+        # uuid.UUID(last_component)
         subprocess.call('umount {}'.format(device_dict['MOUNTPOINT']).split())
         os.rmdir(device_dict['MOUNTPOINT'])
         device_dict['MOUNTPOINT'] = ''

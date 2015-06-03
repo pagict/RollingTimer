@@ -28,13 +28,13 @@ class BackupOperation(Operation.Operation):
     @staticmethod
     def devices():
         device_list = super(BackupOperation, BackupOperation).devices()
-        return [p for p in device_list if p['LABEL'] == 'neokylin_backup']
+        return [p for p in device_list if p['LABEL'] == Operation.Operation.BACKUP_PARTITION_LABEL]
 
     def will_begin(self):
-        utils.mount_device(self.src)
+        # utils.mount_device(self.src)
         utils.mount_device(self.destination)
-        self.from_path = self.src['MOUNTPOINT']
-        os.chdir(self.from_path)
+        # self.from_path = self.src['MOUNTPOINT']
+        # os.chdir(self.from_path)
         name = utils.new_name()
         self.to_path = os.path.join(self.destination['MOUNTPOINT'],
                                     name + Operation.Operation.EXTENSION)
@@ -51,12 +51,8 @@ class BackupOperation(Operation.Operation):
         A backend process separate from GUI to do the real backup operation.
         :return:
         """
-        pipe1_cmd = 'find'.split()
-        op1 = subprocess.Popen(pipe1_cmd, stdout=subprocess.PIPE)
-        pipe2_cmd = 'cpio -ov --file={}'.format(self.to_path).split()
-        subprocess.call(pipe2_cmd,
-                        stdin=op1.stdout,
-                        bufsize=OUTPUT_BUFFER_SIZE)
+        pipe2_cmd = 'fsarchiver savefs {} {} -v'.format(self.to_path, self.src['NAME']).split()
+        subprocess.call(pipe2_cmd)
 
     def will_finish(self):
         # Retrieve the time-stamp as the default tag
@@ -72,7 +68,7 @@ class BackupOperation(Operation.Operation):
             map_file.writelines(utils.record_line(name, self.src['NAME'], tag))
 
         os.chdir(self.old_path)
-        utils.umount_device(self.src)
+        # utils.umount_device(self.src)
         utils.umount_device(self.destination)
 
         self.op = None
